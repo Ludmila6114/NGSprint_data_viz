@@ -83,11 +83,41 @@ ht2
 #Somatic mutations
 
 library(TCGAbiolinks)
+
 maf <- 
-  GDCquery_Maf("GBM", pipelines = "mutect2") %>% 
+  TCGAbiolinks::GDCquery_Maf("GBM", pipelines = "mutect2") %>% 
   read.maf()
 
+devtools::install_github('BioinformaticsFMRP/TCGAbiolinks')
 
 
+#clinical data
+sample_sheet %>%
+  select(starts_with("tcga.gdc_cases.demographic."))
 
+tcga_subtype_data <-
+  TCGAquery_subtype(tumor = "gbm")
+
+tcga_subtype_data %>%
+  select(ends_with("subtype"))
+
+
+library(ggplot2)
+library(RColorBrewer)
+library(ggprism)
+library(patchwork)
+library(magrittr)
+library(rstatix)
+
+
+df_p_val <- rstatix::t_test(tcga_subtype_data,  Age..years.at.diagnosis. ~ Gender) %>% 
+  rstatix::add_x_position()
+
+ggplot(data = tcga_subtype_data[complete.cases(tcga_subtype_data$Gender),], 
+       aes(x = Gender, y = Age..years.at.diagnosis.)) +
+geom_boxplot() + theme_bw() + scale_fill_brewer(palette = "Set2") +
+  xlab('Gender') + ylab('Age of diagnostics') + add_pvalue(df_p_val, y.position = 75)
+
+colnames(tcga_subtype_data)
+summary(tcga_subtype_data)
 
